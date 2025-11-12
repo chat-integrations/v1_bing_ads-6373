@@ -1,3 +1,17 @@
 {
-    "id": "bm0axezDg"
+    "id": "bm0axezDg",
+    "name": "Bing Ads",
+    "product": "livechat",
+    "blocks": {
+        "authorization": {
+            "clientId": "36820eb4e2c2b9a4ecf2dd891e32c498",
+            "type": "server_side_app",
+            "redirectUri": "http://localhost"
+        },
+        "repository": {
+            "provider": "github",
+            "name": "chat-integrations/v1_bing_ads-6373",
+            "branch": "main"
+        }
+    }
 }
