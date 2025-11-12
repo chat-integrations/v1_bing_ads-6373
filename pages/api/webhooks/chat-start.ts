@@ -1,33 +1,43 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-type LiveChatWebhookBody = {
+//
+// TYPES
+//
+interface LiveChatVisitor {
+  page_url?: string;
+  referrer?: string;
+}
+
+interface LiveChatWebhookBody {
   license_id?: string;
   organization?: { license_id?: string };
   license?: string;
   chat_id?: string;
   id?: string;
   timestamp?: string;
-  visitor?: {
-    page_url?: string;
-    referrer?: string;
-  };
-};
+  visitor?: LiveChatVisitor;
+}
 
-type OrgConfig = {
+interface OrgConfig {
   msadsAccountId: string;
   offlineGoalName: string;
   currency: string;
   defaultValue: number;
-};
+}
 
-// TEMP in-memory store (replace with DB later)
+//
+// TEMP IN-MEMORY STORE
+//
 const orgConfigs = new Map<string, OrgConfig>();
 
-export function setOrgConfig(licenseId: string, cfg: OrgConfig) {
+export function setOrgConfig(licenseId: string, cfg: OrgConfig): void {
   orgConfigs.set(licenseId, cfg);
 }
 
-function extractMsclkid(url?: string | null): string | null {
+//
+// HELPERS
+//
+function extractMsclkid(url?: string): string | null {
   if (!url) return null;
   try {
     const u = new URL(url);
@@ -37,33 +47,35 @@ function extractMsclkid(url?: string | null): string | null {
   }
 }
 
-export default async function handler(
+//
+// MAIN HANDLER
+//
+export default function handler(
   req: NextApiRequest,
   res: NextApiResponse
-) {
+): Promise<void | NextApiResponse> | void {
   if (req.method !== "POST") {
     return res.status(405).end();
   }
 
   try {
-    // Type-safe casting — ZERO "any"
-    const body = req.body as LiveChatWebhookBody;
+    const body: LiveChatWebhookBody = req.body;
 
-    const licenseId =
+    const licenseId: string =
       body.license_id ||
       body.organization?.license_id ||
       body.license ||
       "";
 
-    const chatId = body.chat_id || body.id || "";
-    const startedAt = body.timestamp || new Date().toISOString();
+    const chatId: string = body.chat_id || body.id || "";
+    const startedAt: string = body.timestamp || new Date().toISOString();
 
-    const visitorUrl =
+    const visitorUrl: string | undefined =
       body.visitor?.page_url ||
       body.visitor?.referrer ||
-      "";
+      undefined;
 
-    const msclkid = extractMsclkid(visitorUrl);
+    const msclkid: string | null = extractMsclkid(visitorUrl);
 
     const org = orgConfigs.get(String(licenseId));
 
@@ -71,11 +83,12 @@ export default async function handler(
       licenseId,
       chatId,
       startedAt,
+      visitorUrl,
       msclkid,
-      orgConfig: org || "(none)",
+      orgConfig: org || "(none)"
     });
 
-    // TODO: send to Microsoft Ads Offline Conversions API
+    // TODO: send to Microsoft Ads API here
 
     return res.status(200).json({ ok: true });
   } catch (err) {
