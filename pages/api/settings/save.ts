@@ -9,16 +9,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     msadsAccountId,
     offlineGoalName,
     currency = "GBP",
-    defaultValue = 1
-  } = req.body || {};
+    defaultValue = 1,
+  } = req.body as {
+    licenseId?: string;
+    msadsAccountId?: string;
+    offlineGoalName?: string;
+    currency?: string;
+    defaultValue?: number;
+  };
 
-  if (!licenseId) return res.status(400).json({ error: "licenseId required" });
+  if (!licenseId)
+    return res.status(400).json({ error: "licenseId required" });
 
   setOrgConfig(String(licenseId), {
-    msadsAccountId,
-    offlineGoalName,
-    currency,
-    defaultValue
+    msadsAccountId: String(msadsAccountId),
+    offlineGoalName: String(offlineGoalName),
+    currency: String(currency),
+    defaultValue: Number(defaultValue),
   });
 
   return res.status(200).json({ ok: true });
